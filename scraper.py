@@ -2,8 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 
 
-class Scrapper:
-    def __init__(self, url, container_selector):
+class Scraper:
+    def __init__(self, url, container_selector=None):
         self.url = url
         self.container_selector = container_selector
 

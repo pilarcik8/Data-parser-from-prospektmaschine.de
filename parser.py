@@ -1,8 +1,36 @@
 from datetime import datetime
 
 class Parser:
-    BASE_URL = "https://www.prospektmaschine.de"
 
+    def __init__(self, base_url_par):
+        self.BASE_URL = base_url_par
+
+    def parse_navbar_has_child_hrefs(self, soup):
+        urls = []
+
+        nav_ul = soup.select_one("ul.list-unstyled.navbar-nav")
+        if not nav_ul:
+            return urls
+
+        for li in nav_ul.select("li.has_child"):
+            a = li.select_one("a[href]")
+
+            # nenastáva ale kvôli bezpečnosti
+            if not a: 
+                continue
+
+            href = a.get("href")
+            url = self.BASE_URL.rstrip("/") + "/" + href.lstrip("/")
+
+            # tiež kvôli bezpečnosti
+            if url:
+                urls.append(url)
+
+        return urls
+    
+    def parse_container(self, soup):
+        return soup.select_one("div.row.row-flex")
+    
     # Parser rozbije container na karty v ktorych najdeme udaje
     def parse_container_to_cards(self, container):
         return container.select(
@@ -48,7 +76,10 @@ class Parser:
         if not small:
             return None, None
 
-        text = small.get_text(strip=True) # Očakáva sa formát "DD.MM.YYYY - DD.MM.YYYY"
+        # Očakáva sa formát "DD.MM.YYYY - DD.MM.YYYY" napr. von Mittwoch 21.01.2026 (od stredy 21.01.2026) zapisane nebudu
+        text = small.get_text(strip=True) 
+        if "-" not in text:
+            return None, None
         start_str, end_str = [x.strip() for x in text.split("-", 1)]
 
         return self.eu_to_usa_date_format(start_str), self.eu_to_usa_date_format(end_str)
